@@ -2,12 +2,12 @@ package web
 
 import (
 	"bytes"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/xperimental/uswd"
 )
 
 type testDatabase struct {
@@ -26,7 +26,7 @@ func (d *testDatabase) List() ([]string, error) {
 func (d *testDatabase) Get(key string) (string, error) {
 	value, ok := d.db[key]
 	if !ok {
-		return "", errors.New("not found")
+		return "", uswd.NotFoundError(key)
 	}
 
 	return value, nil
@@ -100,6 +100,13 @@ func TestGetHandler(t *testing.T) {
 			key:  "key",
 			code: http.StatusOK,
 			body: "value",
+		},
+		{
+			desc: "not found",
+			db:   map[string]string{},
+			key:  "key",
+			code: http.StatusNotFound,
+			body: "not found: key\n",
 		},
 	} {
 		test := test

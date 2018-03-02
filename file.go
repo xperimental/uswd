@@ -48,7 +48,10 @@ func (d *fileDatabase) Get(key string) (string, error) {
 	path := filepath.Join(d.baseDir, key)
 
 	content, err := ioutil.ReadFile(path)
-	if err != nil {
+	switch {
+	case os.IsNotExist(err):
+		return "", NotFoundError(key)
+	case err != nil:
 		return "", err
 	}
 

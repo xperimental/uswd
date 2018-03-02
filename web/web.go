@@ -40,6 +40,10 @@ func getHandler(db uswd.Database) http.HandlerFunc {
 		key := vars["key"]
 
 		content, err := db.Get(key)
+		if _, ok := err.(uswd.NotFoundError); ok {
+			http.Error(w, fmt.Sprintf("%s", err), http.StatusNotFound)
+			return
+		}
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Error getting content: %s", err), http.StatusInternalServerError)
 			return
