@@ -1,5 +1,7 @@
 package db
 
+import "sort"
+
 type memoryDatabase struct {
 	store map[string]string
 }
@@ -12,16 +14,21 @@ func NewMemoryDatabase() Database {
 }
 
 func (db *memoryDatabase) List() ([]string, error) {
-	// TODO implement list
-	return []string{}, nil
+	keys := []string{}
+	for k := range db.store {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+	return keys, nil
 }
 
 func (db *memoryDatabase) Get(key string) (string, bool, error) {
-	// TODO implement get
-	return "", false, nil
+	value, ok := db.store[key]
+	return value, ok, nil
 }
 
 func (db *memoryDatabase) Put(key, value string) error {
-	// TODO implement put
+	db.store[key] = value
 	return nil
 }
