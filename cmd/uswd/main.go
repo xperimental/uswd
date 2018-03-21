@@ -1,10 +1,10 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 
-	"github.com/spf13/pflag"
 	"github.com/xperimental/uswd"
 	"github.com/xperimental/uswd/web"
 )
@@ -15,9 +15,9 @@ var (
 )
 
 func main() {
-	pflag.StringVarP(&baseDir, "base", "b", baseDir, "Base directory of database.")
-	pflag.StringVarP(&addr, "addr", "a", addr, "Network address to listen on.")
-	pflag.Parse()
+	flag.StringVar(&baseDir, "base", baseDir, "Base directory of database.")
+	flag.StringVar(&addr, "addr", addr, "Network address to listen on.")
+	flag.Parse()
 
 	db, err := uswd.NewFileDatabase(baseDir)
 	if err != nil {
