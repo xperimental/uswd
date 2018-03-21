@@ -53,6 +53,7 @@ func handleGetSingle(database db.Database, key string, w http.ResponseWriter, r 
 		http.Error(w, fmt.Sprintf("%s", err), http.StatusNotFound)
 		return
 	}
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error getting content: %s", err), http.StatusInternalServerError)
 		return

@@ -2,6 +2,7 @@ package web
 
 import (
 	"bytes"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,10 +11,15 @@ import (
 )
 
 type testDatabase struct {
-	db map[string]string
+	db  map[string]string
+	err error
 }
 
 func (d *testDatabase) List() ([]string, error) {
+	if d.err != nil {
+		return nil, d.err
+	}
+
 	keys := []string{}
 	for k := range d.db {
 		keys = append(keys, k)
@@ -23,6 +29,10 @@ func (d *testDatabase) List() ([]string, error) {
 }
 
 func (d *testDatabase) Get(key string) (string, error) {
+	if d.err != nil {
+		return "", d.err
+	}
+
 	value, ok := d.db[key]
 	if !ok {
 		return "", db.NotFoundError(key)
@@ -32,6 +42,10 @@ func (d *testDatabase) Get(key string) (string, error) {
 }
 
 func (d *testDatabase) Put(key, value string) error {
+	if d.err != nil {
+		return d.err
+	}
+
 	d.db[key] = value
 	return nil
 }
@@ -49,40 +63,48 @@ func TestRouterUnknownMethod(t *testing.T) {
 	}
 }
 
-func TestListHandlerEmpty(t *testing.T) {
+func TestHandleGetList(t *testing.T) {
 	for _, test := range []struct {
 		desc string
-		db   map[string]string
+		db   db.Database
 		code int
 		body string
 	}{
 		{
 			desc: "empty",
-			db:   map[string]string{},
+			db: &testDatabase{
+				db: map[string]string{},
+			},
 			code: http.StatusOK,
 			body: "[]\n",
 		},
 		{
 			desc: "one",
-			db: map[string]string{
-				"key": "value",
+			db: &testDatabase{
+				db: map[string]string{
+					"key": "value",
+				},
 			},
 			code: http.StatusOK,
 			body: "[\"key\"]\n",
+		},
+		{
+			desc: "error",
+			db: &testDatabase{
+				err: errors.New("test error"),
+			},
+			code: http.StatusInternalServerError,
+			body: "Database error: test error\n",
 		},
 	} {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			db := &testDatabase{
-				db: test.db,
-			}
-
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodGet, "/", nil)
 
-			handler := DatabaseHandler(db)
+			handler := DatabaseHandler(test.db)
 			handler.ServeHTTP(w, r)
 
 			if w.Code != test.code {
@@ -96,18 +118,20 @@ func TestListHandlerEmpty(t *testing.T) {
 	}
 }
 
-func TestGetHandler(t *testing.T) {
+func TestHandleGetSingle(t *testing.T) {
 	for _, test := range []struct {
 		desc string
-		db   map[string]string
+		db   db.Database
 		path string
 		code int
 		body string
 	}{
 		{
 			desc: "success",
-			db: map[string]string{
-				"key": "value",
+			db: &testDatabase{
+				db: map[string]string{
+					"key": "value",
+				},
 			},
 			path: "/key",
 			code: http.StatusOK,
@@ -115,24 +139,31 @@ func TestGetHandler(t *testing.T) {
 		},
 		{
 			desc: "not found",
-			db:   map[string]string{},
+			db: &testDatabase{
+				db: map[string]string{},
+			},
 			path: "/key",
 			code: http.StatusNotFound,
 			body: "not found: key\n",
+		},
+		{
+			desc: "error",
+			db: &testDatabase{
+				err: errors.New("test error"),
+			},
+			path: "/key",
+			code: http.StatusInternalServerError,
+			body: "Error getting content: test error\n",
 		},
 	} {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			db := &testDatabase{
-				db: test.db,
-			}
-
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodGet, test.path, nil)
 
-			handler := DatabaseHandler(db)
+			handler := DatabaseHandler(test.db)
 			handler.ServeHTTP(w, r)
 
 			if w.Code != test.code {
@@ -146,46 +177,64 @@ func TestGetHandler(t *testing.T) {
 	}
 }
 
-func TestPutHandler(t *testing.T) {
+func TestHandlePut(t *testing.T) {
 	for _, test := range []struct {
 		desc  string
-		db    map[string]string
+		db    db.Database
 		path  string
 		value string
 		code  int
+		body  string
 	}{
 		{
-			desc:  "success",
-			db:    map[string]string{},
+			desc: "success",
+			db: &testDatabase{
+				db: map[string]string{},
+			},
 			path:  "/key",
 			value: "value",
 			code:  http.StatusOK,
+			body:  "saved.\n",
 		},
 		{
-			desc:  "no key",
-			db:    map[string]string{},
+			desc: "no key",
+			db: &testDatabase{
+				db: map[string]string{},
+			},
 			path:  "/",
 			value: "",
 			code:  http.StatusBadRequest,
+			body:  "Key can not be empty!\n",
+		},
+		{
+			desc: "error",
+			db: &testDatabase{
+				err: errors.New("test error"),
+			},
+			path:  "/key",
+			value: "",
+			code:  http.StatusInternalServerError,
+			body:  "Error writing content: test error\n",
 		},
 	} {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			db := &testDatabase{
-				db: test.db,
-			}
-
 			w := httptest.NewRecorder()
 			body := bytes.NewBufferString(test.value)
 			r := httptest.NewRequest(http.MethodPut, test.path, body)
 
-			handler := DatabaseHandler(db)
+			handler := DatabaseHandler(test.db)
 			handler.ServeHTTP(w, r)
 
 			if w.Code != test.code {
 				t.Errorf("got status %d, want %d", w.Code, test.code)
+			}
+
+			bodyStr := w.Body.String()
+			if bodyStr != test.body {
+				t.Errorf("got body %q, want %q", bodyStr, test.body)
 			}
 		})
 	}
