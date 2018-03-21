@@ -1,3 +1,4 @@
+// Package db provides the database backend implementation.
 package db
 
 // Database is a simple key-value store.

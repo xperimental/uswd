@@ -1,3 +1,4 @@
+// Package web provides HTTP handlers for the server.
 package web
 
 import (
