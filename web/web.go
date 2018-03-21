@@ -10,8 +10,8 @@ import (
 	"github.com/xperimental/uswd/db"
 )
 
-// NewRouter creates a new web router with all handlers.
-func NewRouter(database db.Database) http.Handler {
+// DatabaseHandler creates a HTTP handler for interacting with a database.
+func DatabaseHandler(database db.Database) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:

@@ -40,7 +40,7 @@ func TestRouterUnknownMethod(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodDelete, "/", nil)
 
-	handler := NewRouter(&testDatabase{})
+	handler := DatabaseHandler(&testDatabase{})
 	handler.ServeHTTP(w, r)
 
 	expected := http.StatusMethodNotAllowed
@@ -82,7 +82,7 @@ func TestListHandlerEmpty(t *testing.T) {
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodGet, "/", nil)
 
-			handler := NewRouter(db)
+			handler := DatabaseHandler(db)
 			handler.ServeHTTP(w, r)
 
 			if w.Code != test.code {
@@ -132,7 +132,7 @@ func TestGetHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodGet, test.path, nil)
 
-			handler := NewRouter(db)
+			handler := DatabaseHandler(db)
 			handler.ServeHTTP(w, r)
 
 			if w.Code != test.code {
@@ -181,7 +181,7 @@ func TestPutHandler(t *testing.T) {
 			body := bytes.NewBufferString(test.value)
 			r := httptest.NewRequest(http.MethodPut, test.path, body)
 
-			handler := NewRouter(db)
+			handler := DatabaseHandler(db)
 			handler.ServeHTTP(w, r)
 
 			if w.Code != test.code {

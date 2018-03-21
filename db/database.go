@@ -9,6 +9,7 @@ type Database interface {
 	Put(key, value string) error
 }
 
+// A NotFoundError is used when a key is not found in the database.
 type NotFoundError string
 
 func (e NotFoundError) Error() string {

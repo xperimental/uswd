@@ -24,7 +24,7 @@ func main() {
 		log.Fatalf("Error initializing database: %s", err)
 	}
 
-	router := web.NewRouter(db)
+	router := web.DatabaseHandler(db)
 
 	log.Printf("Listening on %s...", addr)
 	if err := http.ListenAndServe(addr, router); err != nil {
