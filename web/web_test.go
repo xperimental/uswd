@@ -36,6 +36,19 @@ func (d *testDatabase) Put(key, value string) error {
 	return nil
 }
 
+func TestRouterUnknownMethod(t *testing.T) {
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodDelete, "/", nil)
+
+	handler := NewRouter(&testDatabase{})
+	handler.ServeHTTP(w, r)
+
+	expected := http.StatusMethodNotAllowed
+	if w.Code != expected {
+		t.Errorf("got status %d, want %d", w.Code, expected)
+	}
+}
+
 func TestListHandlerEmpty(t *testing.T) {
 	for _, test := range []struct {
 		desc string
@@ -147,6 +160,13 @@ func TestPutHandler(t *testing.T) {
 			path:  "/key",
 			value: "value",
 			code:  http.StatusOK,
+		},
+		{
+			desc:  "no key",
+			db:    map[string]string{},
+			path:  "/",
+			value: "",
+			code:  http.StatusBadRequest,
 		},
 	} {
 		test := test
