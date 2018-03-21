@@ -69,7 +69,8 @@ func TestListHandlerEmpty(t *testing.T) {
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodGet, "/", nil)
 
-			handleGetList(db, w, r)
+			handler := NewRouter(db)
+			handler.ServeHTTP(w, r)
 
 			if w.Code != test.code {
 				t.Errorf("got %d, want %d", w.Code, test.code)
@@ -86,7 +87,7 @@ func TestGetHandler(t *testing.T) {
 	for _, test := range []struct {
 		desc string
 		db   map[string]string
-		key  string
+		path string
 		code int
 		body string
 	}{
@@ -95,14 +96,14 @@ func TestGetHandler(t *testing.T) {
 			db: map[string]string{
 				"key": "value",
 			},
-			key:  "key",
+			path: "/key",
 			code: http.StatusOK,
 			body: "value",
 		},
 		{
 			desc: "not found",
 			db:   map[string]string{},
-			key:  "key",
+			path: "/key",
 			code: http.StatusNotFound,
 			body: "not found: key\n",
 		},
@@ -116,9 +117,10 @@ func TestGetHandler(t *testing.T) {
 			}
 
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest(http.MethodGet, "/", nil)
+			r := httptest.NewRequest(http.MethodGet, test.path, nil)
 
-			handleGetSingle(db, test.key, w, r)
+			handler := NewRouter(db)
+			handler.ServeHTTP(w, r)
 
 			if w.Code != test.code {
 				t.Errorf("got status %d, want %d", w.Code, test.code)
@@ -157,9 +159,10 @@ func TestPutHandler(t *testing.T) {
 
 			w := httptest.NewRecorder()
 			body := bytes.NewBufferString(test.value)
-			r := httptest.NewRequest(http.MethodGet, test.path, body)
+			r := httptest.NewRequest(http.MethodPut, test.path, body)
 
-			handlePut(db, w, r)
+			handler := NewRouter(db)
+			handler.ServeHTTP(w, r)
 
 			if w.Code != test.code {
 				t.Errorf("got status %d, want %d", w.Code, test.code)
