@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/xperimental/uswd"
 )
 
@@ -70,8 +69,7 @@ func TestListHandlerEmpty(t *testing.T) {
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodGet, "/", nil)
 
-			handler := listHandler(db)
-			handler(w, r)
+			handleGetList(db, w, r)
 
 			if w.Code != test.code {
 				t.Errorf("got %d, want %d", w.Code, test.code)
@@ -118,12 +116,9 @@ func TestGetHandler(t *testing.T) {
 			}
 
 			w := httptest.NewRecorder()
-			r := mux.SetURLVars(httptest.NewRequest(http.MethodGet, "/", nil), map[string]string{
-				"key": test.key,
-			})
+			r := httptest.NewRequest(http.MethodGet, "/", nil)
 
-			handler := getHandler(db)
-			handler(w, r)
+			handleGetSingle(db, test.key, w, r)
 
 			if w.Code != test.code {
 				t.Errorf("got status %d, want %d", w.Code, test.code)
@@ -140,14 +135,14 @@ func TestPutHandler(t *testing.T) {
 	for _, test := range []struct {
 		desc  string
 		db    map[string]string
-		key   string
+		path  string
 		value string
 		code  int
 	}{
 		{
 			desc:  "success",
 			db:    map[string]string{},
-			key:   "key",
+			path:  "/key",
 			value: "value",
 			code:  http.StatusOK,
 		},
@@ -162,12 +157,9 @@ func TestPutHandler(t *testing.T) {
 
 			w := httptest.NewRecorder()
 			body := bytes.NewBufferString(test.value)
-			r := mux.SetURLVars(httptest.NewRequest(http.MethodGet, "/", body), map[string]string{
-				"key": test.key,
-			})
+			r := httptest.NewRequest(http.MethodGet, test.path, body)
 
-			handler := putHandler(db)
-			handler(w, r)
+			handlePut(db, w, r)
 
 			if w.Code != test.code {
 				t.Errorf("got status %d, want %d", w.Code, test.code)
