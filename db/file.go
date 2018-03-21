@@ -44,18 +44,18 @@ func (d *fileDatabase) List() ([]string, error) {
 	return keys, nil
 }
 
-func (d *fileDatabase) Get(key string) (string, error) {
+func (d *fileDatabase) Get(key string) (string, bool, error) {
 	path := filepath.Join(d.baseDir, key)
 
 	content, err := ioutil.ReadFile(path)
 	switch {
 	case os.IsNotExist(err):
-		return "", NotFoundError(key)
+		return "", false, nil
 	case err != nil:
-		return "", err
+		return "", false, err
 	}
 
-	return string(content), nil
+	return string(content), true, nil
 }
 
 func (d *fileDatabase) Put(key, value string) error {

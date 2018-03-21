@@ -48,14 +48,14 @@ func handleGetList(database db.Database, w http.ResponseWriter, r *http.Request)
 }
 
 func handleGetSingle(database db.Database, key string, w http.ResponseWriter, r *http.Request) {
-	content, err := database.Get(key)
-	if _, ok := err.(db.NotFoundError); ok {
-		http.Error(w, fmt.Sprintf("%s", err), http.StatusNotFound)
+	content, found, err := database.Get(key)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting content: %s", err), http.StatusInternalServerError)
 		return
 	}
 
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error getting content: %s", err), http.StatusInternalServerError)
+	if !found {
+		http.Error(w, fmt.Sprintf("Key not found: %s", key), http.StatusNotFound)
 		return
 	}
 

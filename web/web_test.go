@@ -28,17 +28,17 @@ func (d *testDatabase) List() ([]string, error) {
 	return keys, nil
 }
 
-func (d *testDatabase) Get(key string) (string, error) {
+func (d *testDatabase) Get(key string) (string, bool, error) {
 	if d.err != nil {
-		return "", d.err
+		return "", false, d.err
 	}
 
 	value, ok := d.db[key]
 	if !ok {
-		return "", db.NotFoundError(key)
+		return "", false, nil
 	}
 
-	return value, nil
+	return value, true, nil
 }
 
 func (d *testDatabase) Put(key, value string) error {
@@ -144,7 +144,7 @@ func TestHandleGetSingle(t *testing.T) {
 			},
 			path: "/key",
 			code: http.StatusNotFound,
-			body: "not found: key\n",
+			body: "Key not found: key\n",
 		},
 		{
 			desc: "error",
