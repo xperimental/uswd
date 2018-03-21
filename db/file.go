@@ -1,4 +1,4 @@
-package uswd
+package db
 
 import (
 	"fmt"

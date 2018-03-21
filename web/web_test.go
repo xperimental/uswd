@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/xperimental/uswd"
+	"github.com/xperimental/uswd/db"
 )
 
 type testDatabase struct {
@@ -25,7 +25,7 @@ func (d *testDatabase) List() ([]string, error) {
 func (d *testDatabase) Get(key string) (string, error) {
 	value, ok := d.db[key]
 	if !ok {
-		return "", uswd.NotFoundError(key)
+		return "", db.NotFoundError(key)
 	}
 
 	return value, nil

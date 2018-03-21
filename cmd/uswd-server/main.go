@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/xperimental/uswd"
+	"github.com/xperimental/uswd/db"
 	"github.com/xperimental/uswd/web"
 )
 
@@ -19,7 +19,7 @@ func main() {
 	flag.StringVar(&addr, "addr", addr, "Network address to listen on.")
 	flag.Parse()
 
-	db, err := uswd.NewFileDatabase(baseDir)
+	db, err := db.NewFileDatabase(baseDir)
 	if err != nil {
 		log.Fatalf("Error initializing database: %s", err)
 	}

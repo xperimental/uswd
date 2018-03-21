@@ -7,35 +7,35 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/xperimental/uswd"
+	"github.com/xperimental/uswd/db"
 )
 
 // NewRouter creates a new web router with all handlers.
-func NewRouter(db uswd.Database) http.Handler {
+func NewRouter(database db.Database) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			handleGet(db, w, r)
+			handleGet(database, w, r)
 		case http.MethodPut:
-			handlePut(db, w, r)
+			handlePut(database, w, r)
 		default:
 			http.Error(w, fmt.Sprintf("Unknown method: %s", r.Method), http.StatusMethodNotAllowed)
 		}
 	})
 }
 
-func handleGet(db uswd.Database, w http.ResponseWriter, r *http.Request) {
+func handleGet(database db.Database, w http.ResponseWriter, r *http.Request) {
 	key := getKey(r)
 	if key == "" {
-		handleGetList(db, w, r)
+		handleGetList(database, w, r)
 		return
 	}
 
-	handleGetSingle(db, key, w, r)
+	handleGetSingle(database, key, w, r)
 }
 
-func handleGetList(db uswd.Database, w http.ResponseWriter, r *http.Request) {
-	keys, err := db.List()
+func handleGetList(database db.Database, w http.ResponseWriter, r *http.Request) {
+	keys, err := database.List()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Database error: %s", err), http.StatusInternalServerError)
 		return
@@ -47,9 +47,9 @@ func handleGetList(db uswd.Database, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleGetSingle(db uswd.Database, key string, w http.ResponseWriter, r *http.Request) {
-	content, err := db.Get(key)
-	if _, ok := err.(uswd.NotFoundError); ok {
+func handleGetSingle(database db.Database, key string, w http.ResponseWriter, r *http.Request) {
+	content, err := database.Get(key)
+	if _, ok := err.(db.NotFoundError); ok {
 		http.Error(w, fmt.Sprintf("%s", err), http.StatusNotFound)
 		return
 	}
@@ -61,7 +61,7 @@ func handleGetSingle(db uswd.Database, key string, w http.ResponseWriter, r *htt
 	fmt.Fprint(w, content)
 }
 
-func handlePut(db uswd.Database, w http.ResponseWriter, r *http.Request) {
+func handlePut(database db.Database, w http.ResponseWriter, r *http.Request) {
 	key := getKey(r)
 	if key == "" {
 		http.Error(w, "Key can not be empty!", http.StatusBadRequest)
@@ -74,7 +74,7 @@ func handlePut(db uswd.Database, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := db.Put(key, string(content)); err != nil {
+	if err := database.Put(key, string(content)); err != nil {
 		http.Error(w, fmt.Sprintf("Error writing content: %s", err), http.StatusInternalServerError)
 		return
 	}
