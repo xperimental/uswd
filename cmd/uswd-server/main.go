@@ -2,9 +2,11 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/xperimental/uswd/db"
+	"github.com/xperimental/uswd/web"
 )
 
 var addr = ":8080"
@@ -13,12 +15,10 @@ func main() {
 	flag.StringVar(&addr, "addr", addr, "Network address to listen on.")
 	flag.Parse()
 
-	http.HandleFunc("/", helloHandler)
+	db := db.NewMemoryDatabase()
+
+	http.Handle("/", web.DatabaseHandler(db))
 
 	log.Printf("Listening on %s...", addr)
 	log.Fatal(http.ListenAndServe(addr, nil))
-}
-
-func helloHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello HTTP!")
 }
